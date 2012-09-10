@@ -17,21 +17,20 @@ module SNMP4EM
     #
     def handle_response(response) #:nodoc:
       if response.error_status == :noError
-
         response.varbind_list.each_index do |i|
           response_vb = response.varbind_list[i]
           response_oid = response_vb.name
-          response_walk_oid = response_oid.dup; response_walk_oid.pop
-
+          response_walk_oid = response_oid.dup
           if response_walk_oid.subtree_of?(@query_indexes[i])
             value = @return_raw || !response_vb.value.respond_to?(:rubify) ? response_vb.value : response_vb.value.rubify
-            @responses[response_walk_oid.to_s][response_oid.dup.pop] = value
-            @next_oids[response_walk_oid] = response_oid
+            key = @query_indexes[i].to_s
+            sub_key = response_oid.to_s.split(key, 2)[1][1..-1]
+            @responses[key][sub_key] = value
+            @next_oids[@query_indexes[i]] = response_oid
           else
             @next_oids.delete(@query_indexes[i])
           end
         end
-      
         @max_results -= 1 unless @max_results.nil?
       else
         @errors ||= []
@@ -65,7 +64,6 @@ module SNMP4EM
           @responses[walk_oid.to_s] = {}
         end
       end
-      
       #
       # @query_indexes maps the index of the requested oid to the walk oid
       #
