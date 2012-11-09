@@ -34,9 +34,16 @@ module SNMP4EM
         @max_results -= 1 unless @max_results.nil?
       else
         @errors ||= []
-        error_oid = response.varbind_list[response.error_index].name
-        @errors << SNMP::ResponseError.new("Couldn't gather: #{error_oid} -> #{response.error_status}")
-        fail @errors if @error_retries < 1 
+        case response.error_status
+          when :tooBig
+            @errors << SNMP::ResponseError.new("The response to your request was too big to fit into one response. -> #{response.error_status}")
+          when :readOnly
+            @errors << SNMP::ResponseError.new("The agent was unable to set an OID in your request -> #{response.error_status}")
+          else
+            error_oid = response.varbind_list[response.error_index].name rescue '<no varBindList or OID set for this error>'
+            @errors << SNMP::ResponseError.new("Couldn't gather: #{error_oid} -> #{response.error_status}")
+        end
+        fail @errors if @error_retries < 1
         @error_retries -= 1
       end
 
