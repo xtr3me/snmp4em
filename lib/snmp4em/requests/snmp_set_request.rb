@@ -86,7 +86,7 @@ module SNMP4EM
 
       vb_list = SNMP::VarBindList.new(@pending_varbinds)
       request = SNMP::SetRequest.new(@snmp_id, vb_list)
-      message = SNMP::Message.new(@sender.version, @sender.community_ro, request)
+      message = SNMP::Message.new(@sender.version, @sender.community_rw, request)
       
       super(message)
     end
